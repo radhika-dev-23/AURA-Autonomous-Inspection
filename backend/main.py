@@ -58,4 +58,5 @@ async def websocket_endpoint(websocket: WebSocket):
 import os
 if os.path.exists("frontend"):
     app.mount("/data", StaticFiles(directory="data"), name="data")
-    app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+    frontend_dir = "frontend/dist" if os.path.exists("frontend/dist") else "frontend"
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
