@@ -1,0 +1,40 @@
+{
+    "id": "obvious_defect",
+    "name": "Obvious Open Circuit \u2014 FAIL Expected",
+    "description": "Large visible defect. Demonstrates confident FAIL.",
+    "expected_result": "FAIL",
+    "expected_path": "direct",
+    "template_image": "data/pcb/templates/board_01_clean.jpg",
+    "test_images": [
+        "data/pcb/test/board_01_obvious_defect.jpg"
+    ],
+    "defect_annotations": [
+        {
+            "type": "open_circuit",
+            "bbox": {
+                "x": 240,
+                "y": 180,
+                "w": 120,
+                "h": 40
+            },
+            "severity": "CRITICAL"
+        }
+    ],
+    "inspection_positions": [
+        {
+            "label": "primary",
+            "x": 150,
+            "y": 100,
+            "z": 300,
+            "angle_deg": 0,
+            "zoom": 1.0
+        }
+    ],
+    "lighting_modes": [
+        "direct"
+    ],
+    "sensor_overrides": {
+        "thermal_anomaly": 0.85,
+        "continuity": 0.1
+    }
+}

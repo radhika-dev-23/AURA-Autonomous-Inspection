@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA — Autonomous Inspection Intelligence</title>
+    <meta name="description" content="AURA: Autonomous Uncertainty-Aware Robotic Inspection Assistant. Real-time PCB defect detection with autonomous RECHECK and evidence fusion.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="state-idle">
+
+    <!-- ══════════════════════════ HEADER ══════════════════════════ -->
+    <header class="aura-header">
+        <div class="header-brand">
+            <h1 class="brand-name">AURA</h1>
+            <span class="brand-subtitle">AUTONOMOUS INSPECTION INTELLIGENCE</span>
+        </div>
+        <div class="header-meta">
+            <div class="meta-item">
+                <span class="meta-label">SYSTEM</span>
+                <span class="meta-value status-online"><span class="status-dot"></span>ONLINE</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">INSPECTION</span>
+                <span class="meta-value" id="inspection-id">#AURA-0000</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">MODE</span>
+                <span class="meta-value tag-sim">SIMULATION</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ══════════════════════════ MAIN GRID ══════════════════════════ -->
+    <main class="app-grid">
+
+        <!-- ──────── LEFT: MISSION CONTROL ──────── -->
+        <aside class="panel panel-left" id="panel-left">
+            <div class="panel-head"><h2>MISSION CONTROL</h2></div>
+            <div class="panel-body">
+                <div id="scenario-list" class="scenario-list"></div>
+                <div class="action-bar">
+                    <button id="btn-start" class="btn btn-primary" disabled>START INSPECTION</button>
+                    <button id="btn-reset" class="btn btn-ghost">RESET</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ──────── CENTER: DIGITAL INSPECTION CELL ──────── -->
+        <section class="panel panel-center" id="panel-center">
+            <div class="panel-head">
+                <h2>DIGITAL INSPECTION CELL</h2>
+                <!-- View Toggle -->
+                <div class="view-toggle" id="view-toggle">
+                    <button class="vt-btn active" data-view="real">REAL VIEW</button>
+                    <button class="vt-btn" data-view="diff">DIFFERENCE</button>
+                    <button class="vt-btn" data-view="heatmap">ANOMALY MAP</button>
+                </div>
+            </div>
+            <div class="panel-body cell-body">
+                <!-- Robot/Camera Telemetry Overlay -->
+                <div class="cell-telemetry" id="cell-telemetry">
+                    <div class="tel-group">
+                        <span class="tel-label">[VIRTUAL ROBOT]</span>
+                        <span class="tel-val" id="tel-pos">X:150  Y:100  Z:300 mm</span>
+                    </div>
+                    <div class="tel-group">
+                        <span class="tel-label">[VIRTUAL CAMERA]</span>
+                        <span class="tel-val" id="tel-cam">0° DIRECT</span>
+                    </div>
+                    <div class="tel-group">
+                        <span class="tel-label">LIGHTING</span>
+                        <span class="tel-val" id="tel-light">DIRECT</span>
+                    </div>
+                    <div class="tel-group">
+                        <span class="tel-label">ACTION</span>
+                        <span class="tel-val accent" id="tel-action">IDLE</span>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="canvas-wrap">
+                    <canvas id="inspection-canvas" width="800" height="600"></canvas>
+                    <!-- Scanning overlay -->
+                    <div class="scan-line" id="scan-line"></div>
+                    <!-- Crosshair -->
+                    <div class="xhair xhair-h"></div>
+                    <div class="xhair xhair-v"></div>
+                </div>
+
+                <!-- Camera Label -->
+                <div class="cam-label" id="cam-label">
+                    <span>CAMERA 01</span>
+                    <span>DIRECT VIEW</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ──────── RIGHT: DECISION INTELLIGENCE ──────── -->
+        <aside class="panel panel-right" id="panel-right">
+            <div class="panel-head"><h2>DECISION INTELLIGENCE</h2></div>
+            <div class="panel-body decision-body">
+
+                <!-- FSM State -->
+                <div class="state-block">
+                    <div class="state-text" id="fsm-state">IDLE</div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-label">DEFECT SCORE</span>
+                        <span class="metric-label-sub">heuristic anomaly strength</span>
+                        <div class="metric-value" id="val-score">—</div>
+                        <div class="score-gauge">
+                            <div class="sg-track">
+                                <div class="sg-zone sg-pass" style="width:30%"></div>
+                                <div class="sg-zone sg-recheck" style="width:40%"></div>
+                                <div class="sg-zone sg-fail" style="width:30%"></div>
+                            </div>
+                            <div class="sg-needle" id="gauge-needle" style="left:0%"></div>
+                            <div class="sg-labels">
+                                <span>0.0</span><span>PASS</span><span>RECHECK</span><span>FAIL</span><span>1.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">DECISION CONFIDENCE</span>
+                        <span class="metric-label-sub">clarity of signal</span>
+                        <div class="metric-value" id="val-conf">—</div>
+                        <div class="conf-bar"><div class="conf-fill" id="conf-fill"></div></div>
+                    </div>
+                </div>
+
+                <!-- Evidence Fusion -->
+                <div class="evidence-block hidden" id="evidence-block">
+                    <span class="section-label">EVIDENCE FUSION</span>
+                    <div class="fusion-visual">
+                        <div class="ev-card">
+                            <span class="ev-num">OBS 01</span>
+                            <span class="ev-score" id="ev-obs1">—</span>
+                            <span class="ev-view">DIRECT VIEW</span>
+                        </div>
+                        <div class="ev-connector">
+                            <svg viewBox="0 0 60 80" width="60" height="80">
+                                <path d="M0 20 Q30 20 30 40" stroke="currentColor" fill="none" stroke-width="1.5"/>
+                                <path d="M0 60 Q30 60 30 40" stroke="currentColor" fill="none" stroke-width="1.5"/>
+                                <path d="M30 40 L60 40" stroke="currentColor" fill="none" stroke-width="1.5"/>
+                                <polygon points="55,36 60,40 55,44" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="ev-card">
+                            <span class="ev-num">OBS 02</span>
+                            <span class="ev-score" id="ev-obs2">—</span>
+                            <span class="ev-view">CLOSE-UP</span>
+                        </div>
+                        <div class="ev-fused">
+                            <span class="ev-num">FUSED</span>
+                            <span class="ev-score highlight" id="ev-fused">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Decision -->
+                <div class="decision-card hidden" id="decision-card">
+                    <span class="section-label">FINAL DECISION</span>
+                    <div class="decision-result" id="decision-result">—</div>
+                    <div class="decision-action" id="decision-action">—</div>
+                </div>
+
+                <!-- Explanation -->
+                <div class="explanation">
+                    <span class="section-label">AI INSPECTION EXPLANATION</span>
+                    <ul class="reason-list" id="reason-list">
+                        <li>System idle. Select a scenario and start inspection.</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ──────── BOTTOM: TIMELINE ──────── -->
+        <footer class="panel panel-bottom" id="panel-bottom">
+            <div class="timeline" id="timeline"></div>
+        </footer>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

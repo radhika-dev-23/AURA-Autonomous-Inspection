@@ -1,0 +1,50 @@
+{
+    "id": "ambiguous_recheck",
+    "name": "Subtle Solder Bridge \u2014 RECHECK Demo",
+    "description": "Barely visible bridge between traces. First observation is uncertain. RECHECK confirms.",
+    "expected_result": "FAIL",
+    "expected_path": "recheck",
+    "template_image": "data/pcb/templates/board_01_clean.jpg",
+    "test_images": [
+        "data/pcb/test/board_01_subtle_defect.jpg",
+        "data/pcb/test/board_01_subtle_defect_zoomed.jpg"
+    ],
+    "defect_annotations": [
+        {
+            "type": "solder_bridge",
+            "bbox": {
+                "x": 280,
+                "y": 180,
+                "w": 40,
+                "h": 90
+            },
+            "severity": "HIGH"
+        }
+    ],
+    "inspection_positions": [
+        {
+            "label": "primary",
+            "x": 150,
+            "y": 100,
+            "z": 300,
+            "angle_deg": 0,
+            "zoom": 1.0
+        },
+        {
+            "label": "recheck_close",
+            "x": 160,
+            "y": 105,
+            "z": 150,
+            "angle_deg": 15,
+            "zoom": 2.0
+        }
+    ],
+    "lighting_modes": [
+        "direct",
+        "angled"
+    ],
+    "sensor_overrides": {
+        "thermal_anomaly": 0.65,
+        "continuity": 0.4
+    }
+}
