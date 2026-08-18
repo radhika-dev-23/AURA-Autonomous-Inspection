@@ -23,6 +23,10 @@ interface InspectionStore {
   inspRunning: boolean;
   connected: boolean;
 
+  // Defect Focus Selection State
+  selectedDefectIndex: number | null;
+  isFocusMode: boolean;
+
   // Actions
   setScenarios: (scenarios: Scenario[]) => void;
   selectScenario: (id: string) => void;
@@ -33,6 +37,13 @@ interface InspectionStore {
   handleInspectionComplete: (complete: WSInspectionComplete) => void;
   handleError: (msg: string) => void;
   resetUI: (full?: boolean) => void;
+
+  // Focus Mode Actions
+  selectDefect: (index: number | null) => void;
+  setFocusMode: (focus: boolean) => void;
+  nextDefect: () => void;
+  prevDefect: () => void;
+  returnToOverview: () => void;
 }
 
 const generateInspId = () => Math.floor(Math.random() * 9000 + 1000).toString();
@@ -57,6 +68,9 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
   inspRunning: false,
   connected: false,
 
+  selectedDefectIndex: null,
+  isFocusMode: false,
+
   setScenarios: (scenarios) => set({ scenarios }),
 
   selectScenario: (id) => {
@@ -76,6 +90,12 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
       const obsScores = update.obs_scores && update.obs_scores.length > 0 ? update.obs_scores : store.obsScores;
       const timeline = update.timeline || store.timeline;
 
+      // Auto select primary defect if defects arrive and none selected yet
+      let selectedDefectIndex = store.selectedDefectIndex;
+      if (defects.length > 0 && selectedDefectIndex == null) {
+        selectedDefectIndex = 0;
+      }
+
       return {
         state: update.state,
         rechecks: update.rechecks,
@@ -86,12 +106,16 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
         defects,
         obsScores,
         timeline,
+        selectedDefectIndex,
       };
     });
   },
 
   handleInspectionComplete: (complete) => {
     const decisionAction = complete.decision === 'FAIL' ? '→ ROUTE TO REJECT BIN' : '→ RELEASE TO PRODUCTION';
+    const defects = complete.defects || get().defects;
+    const selectedDefectIndex = defects.length > 0 ? 0 : null;
+
     set({
       inspRunning: false,
       state: 'COMPLETE',
@@ -100,9 +124,10 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
       currentScore: complete.defect_score !== undefined ? complete.defect_score : get().currentScore,
       confidence: complete.confidence !== undefined ? complete.confidence : get().confidence,
       fusedScore: complete.fused_score !== undefined ? complete.fused_score : get().fusedScore,
-      defects: complete.defects || get().defects,
+      defects,
       currentImagePath: complete.final_image || get().currentImagePath,
       reasoning: complete.reasoning && complete.reasoning.length > 0 ? complete.reasoning : get().reasoning,
+      selectedDefectIndex,
     });
   },
 
@@ -130,7 +155,35 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
       reasoning: ['System idle. Select a scenario and start inspection.'],
       viewMode: 'real',
       inspRunning: false,
+      selectedDefectIndex: null,
+      isFocusMode: false,
       scenarioId: full ? null : get().scenarioId,
     });
+  },
+
+  selectDefect: (index) => {
+    set({ selectedDefectIndex: index });
+  },
+
+  setFocusMode: (isFocusMode) => {
+    set({ isFocusMode });
+  },
+
+  nextDefect: () => {
+    const { defects, selectedDefectIndex } = get();
+    if (!defects.length) return;
+    const nextIdx = (selectedDefectIndex === null ? 0 : selectedDefectIndex + 1) % defects.length;
+    set({ selectedDefectIndex: nextIdx, isFocusMode: true });
+  },
+
+  prevDefect: () => {
+    const { defects, selectedDefectIndex } = get();
+    if (!defects.length) return;
+    const prevIdx = selectedDefectIndex === null || selectedDefectIndex === 0 ? defects.length - 1 : selectedDefectIndex - 1;
+    set({ selectedDefectIndex: prevIdx, isFocusMode: true });
+  },
+
+  returnToOverview: () => {
+    set({ isFocusMode: false });
   },
 }));
